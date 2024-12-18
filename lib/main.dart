@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'dashboard_screen.dart';
+import 'placa_status_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,6 +16,7 @@ class MyApp extends StatelessWidget {
       home: LoginScreen(),
       routes: {
         '/dashboard': (context) => DashboardScreen(),
+        '/placa-status': (context) => PlacaStatusScreen(),
       },
     );
   }

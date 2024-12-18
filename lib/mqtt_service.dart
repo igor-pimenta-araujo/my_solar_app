@@ -1,6 +1,8 @@
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:mqtt_client/mqtt_client.dart';
+import 'config.dart';
 
 class MqttService {
   late MqttServerClient client;
@@ -42,8 +44,9 @@ class MqttService {
     await initializeNotifications();
 
     // Existing MQTT setup code
-    client = MqttServerClient('test.mosquitto.org', 'flutter_client');
-    client.port = 1883;
+    // ...
+    client = MqttServerClient(MqttConfig.broker, MqttConfig.clientId);
+    client.port = MqttConfig.port;
     client.keepAlivePeriod = 30;
 
     final connMessage = MqttConnectMessage()

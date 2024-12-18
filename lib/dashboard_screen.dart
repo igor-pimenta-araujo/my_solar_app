@@ -1,60 +1,115 @@
 import 'package:flutter/material.dart';
 
-class DashboardScreen extends StatefulWidget {
-  @override
-  _DashboardScreenState createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
-  // Simulação de dados da API
-  final List locais = [
-    {
-      "id": 1,
-      "nome": "Local 1",
-      "placas": [
-        {"id": 101, "nome": "Placa Solar 1", "status": "Produzindo", "producao": "500W"},
-        {"id": 102, "nome": "Placa Solar 2", "status": "Parada", "producao": "0W"}
-      ]
-    },
-    {
-      "id": 2,
-      "nome": "Local 2",
-      "placas": [
-        {"id": 201, "nome": "Placa Solar 3", "status": "Produzindo", "producao": "750W"}
-      ]
-    }
+class DashboardScreen extends StatelessWidget {
+  // Simulação de dados das placas solares
+  final List<Map<String, dynamic>> placas = [
+    {"id": 1, "nome": "Placa 1", "local": "Sala de Estar", "cor": Colors.blue},
+    {"id": 2, "nome": "Placa 2", "local": "Escritório", "cor": Colors.red},
+    {"id": 3, "nome": "Placa 3", "local": "Quarto", "cor": Colors.green},
+    {"id": 4, "nome": "Placa 4", "local": "Cozinha", "cor": Colors.yellow},
+    {"id": 5, "nome": "Placa 5", "local": "Suíte", "cor": Colors.teal},
+    {"id": 6, "nome": "Placa 6", "local": "Varanda", "cor": Colors.purple},
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Painel Geral'),
+        title: Text('Home'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () {
+              // Ação de configuração
+            },
+            icon: Icon(Icons.settings),
+          ),
+        ],
       ),
-      body: ListView.builder(
-        itemCount: locais.length,
-        itemBuilder: (context, index) {
-          final local = locais[index];
-          return Card(
-            margin: EdgeInsets.all(10),
-            child: ExpansionTile(
-              title: Text(local['nome'], style: TextStyle(fontWeight: FontWeight.bold)),
-              children: [
-                ...local['placas'].map((placa) {
-                  return ListTile(
-                    title: Text(placa['nome']),
-                    subtitle: Text('Status: ${placa['status']}'),
-                    trailing: Text(
-                      'Produção: ${placa['producao']}',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  );
-                }).toList(),
-              ],
+      body: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: GridView.builder(
+          itemCount: placas.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1,
+          ),
+          itemBuilder: (context, index) {
+            final placa = placas[index];
+            return GestureDetector(
+              onTap: () {
+                // Navega para a tela de detalhes da placa
+                Navigator.pushNamed(context, '/placa-status');
+              },
+              child: Card(
+                color: placa['cor'],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.solar_power,
+                        size: 40,
+                        color: Colors.white,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        placa['local'],
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.black,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.home, color: Colors.white),
             ),
-          );
-        },
+            IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.wifi, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class DetalhesPlacaScreen extends StatelessWidget {
+  final Map<String, dynamic> placa;
+
+  DetalhesPlacaScreen({required this.placa});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(placa['local']),
+      ),
+      body: Center(
+        child: Text(
+          "Detalhes da ${placa['nome']}",
+          style: TextStyle(fontSize: 24),
+        ),
       ),
     );
   }
