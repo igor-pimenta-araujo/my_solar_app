@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
 import 'services/api_service.dart';
-import 'register_screen.dart';
 
-class LoginScreen extends StatefulWidget {
+class RegisterScreen extends StatefulWidget {
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _RegisterScreenState createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final ApiService apiService = ApiService();
 
-  void _login() async {
+  void _register() async {
     try {
-      final response = await apiService.login(
+      await apiService.createUser(
+        _nameController.text,
         _emailController.text,
         _passwordController.text,
       );
-      print("Token: ${response['token']}");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login bem-sucedido!')),
+        SnackBar(content: Text('Conta criada com sucesso! Faça o login.')),
       );
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pop(context); // Volta para a tela de login
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
@@ -33,12 +33,16 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Login")),
+      appBar: AppBar(title: Text("Registro")),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(labelText: "Nome"),
+            ),
             TextField(
               controller: _emailController,
               decoration: InputDecoration(labelText: "E-mail"),
@@ -51,22 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: 20),
             Center(
               child: ElevatedButton(
-                onPressed: _login,
-                child: Text("Entrar"),
-              ),
-            ),
-            Center(
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => RegisterScreen()),
-                  );
-                },
-                child: Text(
-                  "Não tem uma conta? Registre-se aqui",
-                  style: TextStyle(color: Colors.blue),
-                ),
+                onPressed: _register,
+                child: Text("Registrar"),
               ),
             ),
           ],
