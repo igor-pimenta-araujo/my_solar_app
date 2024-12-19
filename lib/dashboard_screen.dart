@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:my_solar_app/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
 import 'mqtt_service.dart';
@@ -54,6 +56,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> showTestNotification() async {
+    const androidDetails = AndroidNotificationDetails(
+      'test_channel', // ID do canal
+      'Test Notifications', // Nome do canal
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const notificationDetails = NotificationDetails(android: androidDetails);
+
+    await flutterLocalNotificationsPlugin.show(
+      0, // ID da notificação
+      'Teste de Notificação', // Título
+      'Esta é uma notificação de teste.', // Corpo
+      notificationDetails,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,6 +87,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: _logout,
+          ),
+          IconButton(
+            icon: Icon(Icons.notification_add),
+            onPressed: showTestNotification,
           ),
         ],
       ),
