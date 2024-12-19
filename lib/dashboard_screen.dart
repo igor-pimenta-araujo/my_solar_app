@@ -1,115 +1,143 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
-class DashboardScreen extends StatelessWidget {
-  // Simulação de dados das placas solares
-  final List<Map<String, dynamic>> placas = [
-    {"id": 1, "nome": "Placa 1", "local": "Sala de Estar", "cor": Colors.blue},
-    {"id": 2, "nome": "Placa 2", "local": "Escritório", "cor": Colors.red},
-    {"id": 3, "nome": "Placa 3", "local": "Quarto", "cor": Colors.green},
-    {"id": 4, "nome": "Placa 4", "local": "Cozinha", "cor": Colors.yellow},
-    {"id": 5, "nome": "Placa 5", "local": "Suíte", "cor": Colors.teal},
-    {"id": 6, "nome": "Placa 6", "local": "Varanda", "cor": Colors.purple},
-  ];
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'services/api_service.dart';
+
+class DashboardScreen extends StatefulWidget {
+  @override
+  _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final ApiService apiService = ApiService();
+  Map<String, dynamic>? userData;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAndStoreUserDetails();
+  }
+
+  Future<void> _fetchAndStoreUserDetails() async {
+    try {
+      final data = await apiService.fetchUserDetails();
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userData', jsonEncode(data));
+
+      setState(() {
+        userData = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar dados do usuário: $e')),
+      );
+    }
+  }
+
+  void _goToAddPlace() {
+    Navigator.pushNamed(context, '/addPlace').then((_) => _fetchAndStoreUserDetails());
+  }
+
+  void _goToPlaceDetails(String placeId, String placeName) {
+    Navigator.pushNamed(
+      context,
+      '/placeDetails',
+      arguments: {
+        'placeId': placeId,
+        'placeName': placeName,
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Home'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {
-              // Ação de configuração
-            },
-            icon: Icon(Icons.settings),
-          ),
-        ],
+        title: Text("Dashboard"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: GridView.builder(
-          itemCount: placas.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1,
-          ),
-          itemBuilder: (context, index) {
-            final placa = placas[index];
-            return GestureDetector(
-              onTap: () {
-                // Navega para a tela de detalhes da placa
-                Navigator.pushNamed(context, '/placa-status');
-              },
-              child: Card(
-                color: placa['cor'],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.solar_power,
-                        size: 40,
-                        color: Colors.white,
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        placa['local'],
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.black,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : _buildUserPlaces(),
+    );
+  }
+
+  Widget _buildUserPlaces() {
+    final places = userData?['userPlaces'] ?? [];
+
+    if (places.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.home, color: Colors.white),
-            ),
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.wifi, color: Colors.white),
+            Text("Nenhum local cadastrado."),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _goToAddPlace,
+              child: Text("Adicionar Novo Local"),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
+      );
+    }
 
-class DetalhesPlacaScreen extends StatelessWidget {
-  final Map<String, dynamic> placa;
-
-  DetalhesPlacaScreen({required this.placa});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(placa['local']),
-      ),
-      body: Center(
-        child: Text(
-          "Detalhes da ${placa['nome']}",
-          style: TextStyle(fontSize: 24),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1,
         ),
+        itemCount: places.length,
+        itemBuilder: (context, index) {
+          final place = places[index];
+          return GestureDetector(
+            onTap: () => _goToPlaceDetails(place['id'], place['name']),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black87,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.orange, width: 2),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    size: 50,
+                    color: Colors.orange,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    place['name'],
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    "Toque para detalhes",
+                    style: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
