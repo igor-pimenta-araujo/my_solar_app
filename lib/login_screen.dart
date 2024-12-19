@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -18,15 +18,20 @@ class _LoginScreenState extends State<LoginScreen> {
         _emailController.text,
         _passwordController.text,
       );
-      print("Token: ${response['token']}");
+
+      // Salvar accessToken e userId no SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('accessToken', response['accessToken']);
+      await prefs.setString('userId', response['userId']);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login bem-sucedido!')),
-      );
+        SnackBar(content: Text('Login bem-sucedido!')));
+
+      // Redirecionar para a dashboard
       Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+        SnackBar(content: Text('Erro ao fazer login: $e')));
     }
   }
 
@@ -37,7 +42,6 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
               controller: _emailController,
@@ -49,25 +53,9 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: true,
             ),
             SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: _login,
-                child: Text("Entrar"),
-              ),
-            ),
-            Center(
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => RegisterScreen()),
-                  );
-                },
-                child: Text(
-                  "Não tem uma conta? Registre-se aqui",
-                  style: TextStyle(color: Colors.blue),
-                ),
-              ),
+            ElevatedButton(
+              onPressed: _login,
+              child: Text("Entrar"),
             ),
           ],
         ),
