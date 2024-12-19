@@ -68,8 +68,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     await flutterLocalNotificationsPlugin.show(
       0, // ID da notificação
-      'Teste de Notificação', // Título
-      'Esta é uma notificação de teste.', // Corpo
+      'Aviso sobre seus locais', // Título
+      'Houve um problema no seu local. Abra o app para maior informação', // Corpo
       notificationDetails,
     );
   }
@@ -79,7 +79,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Dashboard"),
+        backgroundColor: Colors.white10,
         actions: [
+          IconButton(
+            icon: Icon(Icons.notification_add),
+            onPressed: showTestNotification,
+            color: Colors.white10,
+          ),
           IconButton(
             icon: Icon(Icons.settings),
             onPressed: () => Navigator.pushNamed(context, '/settings'),
@@ -89,8 +95,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: _logout,
           ),
           IconButton(
-            icon: Icon(Icons.notification_add),
-            onPressed: showTestNotification,
+            icon: Icon(Icons.notification_important),
+            onPressed: () {
+              mqttService.publish('notificationTopic', '{"payload": "Mensagem de teste"}');
+              print('Mensagem de teste publicada no tópico.');
+            },
           ),
         ],
       ),

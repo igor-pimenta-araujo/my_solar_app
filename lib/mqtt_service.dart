@@ -26,17 +26,20 @@ class MqttService {
 
   // Exibir notificação local
   void _showNotification(String message) async {
+    print(message);
     const androidDetails = AndroidNotificationDetails(
-      'flutter_mqtt_channel', // ID do canal
-      'MQTT', // Nome do canal
+      'test_channel', // ID do canal
+      'Test Notifications', // Nome do canal
       importance: Importance.high,
       priority: Priority.high,
     );
+
     const notificationDetails = NotificationDetails(android: androidDetails);
+
     await flutterLocalNotificationsPlugin.show(
       0, // ID da notificação
-      'Nova mensagem', // Título
-      message, // Corpo
+      'Teste de Notificação', // Título
+      'Esta é uma notificação de teste.', // Corpo
       notificationDetails,
     );
   }
@@ -58,12 +61,15 @@ class MqttService {
     client.onSubscribed = onSubscribed;
 
     client.updates?.listen((List<MqttReceivedMessage<MqttMessage?>>? messages) {
+      print('Mensagem recebida: $messages');
       final recMessage = messages?[0].payload as MqttPublishMessage;
       final payload =
           MqttPublishPayload.bytesToStringAsString(recMessage.payload.message);
 
+      print('Mensagem recebida: $payload');
       // Parse o payload como JSON e exibe notificação
       try {
+        print('Igor Payload: $payload');
         final data = payload.contains("{") ? jsonDecode(payload) : {};
         final message = data['payload'] ?? 'Mensagem não encontrada';
         _showNotification(message);
