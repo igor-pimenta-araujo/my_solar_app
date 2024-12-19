@@ -77,9 +77,10 @@ class _PlacaStatusScreenState extends State<PlacaStatusScreen> {
                         ),
                         child: isLoading
                             ? CircularProgressIndicator(
-                          color: Colors.white,
-                        )
-                            : Text("Buscar", style: TextStyle(color: Colors.grey[100])),
+                                color: Colors.white,
+                              )
+                            : Text("Buscar",
+                                style: TextStyle(color: Colors.grey[100])),
                       ),
                     ),
                   ],
@@ -117,26 +118,35 @@ class _PlacaStatusScreenState extends State<PlacaStatusScreen> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: sensores.length,
-                itemBuilder: (context, index) {
-                  final sensor = sensores[index];
-                  return Card(
-                    child: ListTile(
-                      leading: Icon(
-                        sensor['status'] == "Normal"
-                            ? Icons.check_circle
-                            : Icons.warning,
-                        color: sensor['status'] == "Normal"
-                            ? Colors.green
-                            : Colors.red,
+              child: sensores.isEmpty
+                  ? Center(
+                      child: Text(
+                        "Nenhum sensor encontrado.",
+                        style: TextStyle(color: Colors.grey[600]),
                       ),
-                      title: Text(sensor['nome']!),
-                      subtitle: Text("Status: ${sensor['status']}"),
+                    )
+                  : ListView.builder(
+                      itemCount: sensores.length,
+                      itemBuilder: (context, index) {
+                        final sensor = sensores[index];
+                        return Card(
+                          child: ListTile(
+                            leading: Icon(
+                              (sensor['status'] ?? "Desconhecido") == "Normal"
+                                  ? Icons.check_circle
+                                  : Icons.warning,
+                              color: (sensor['status'] ?? "Desconhecido") ==
+                                      "Normal"
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                            title: Text(sensor['nome'] ?? "Nome não disponível"),
+                            subtitle: Text(
+                                "Status: ${sensor['status'] ?? "Desconhecido"}"),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

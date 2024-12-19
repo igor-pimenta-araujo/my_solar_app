@@ -6,6 +6,7 @@ import 'create_place_screen.dart';
 import 'user_screen.dart';
 import 'places_screen.dart';
 import 'place_details_screen.dart';
+import 'settings_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
         '/placa-status': (context) => PlacaStatusScreen(),
         '/create-place': (context) => CreatePlaceScreen(userId: "USER_ID_EXEMPLO"),
         '/user': (context) => UserScreen(userId: "USER_ID_EXEMPLO"),
+        '/settings': (context) => SettingsScreen(),
         '/places': (context) => PlacesScreen(userId: "USER_ID_EXEMPLO"),
         '/placeDetails': (context) {
         final args = ModalRoute.of(context)!.settings.arguments as Map;

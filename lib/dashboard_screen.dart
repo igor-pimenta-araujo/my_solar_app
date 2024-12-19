@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
+import 'mqtt_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -11,6 +12,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final ApiService apiService = ApiService();
+  final MqttService mqttService = MqttService();
   Map<String, dynamic>? userData;
   bool isLoading = true;
 
@@ -18,6 +20,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _fetchAndStoreUserDetails();
+    _connectToMqtt();
   }
 
   Future<void> _fetchAndStoreUserDetails() async {
@@ -41,19 +44,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _goToAddPlace() {
-    Navigator.pushNamed(context, '/addPlace').then((_) => _fetchAndStoreUserDetails());
-  }
-
-  void _goToPlaceDetails(String placeId, String placeName) {
-    Navigator.pushNamed(
-      context,
-      '/placeDetails',
-      arguments: {
-        'placeId': placeId,
-        'placeName': placeName,
-      },
-    );
+  Future<void> _connectToMqtt() async {
+    try {
+      await mqttService.connect();
+      mqttService.subscribeToTopic('test/topic'); // Substitua pelo seu tópico
+    } catch (e) {
+      print('Erro ao conectar ao MQTT: $e');
+    }
   }
 
   @override
@@ -61,11 +58,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Dashboard"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: _logout,
+          ),
+        ],
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : _buildUserPlaces(),
     );
+  }
+
+  void _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   Widget _buildUserPlaces() {
@@ -79,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text("Nenhum local cadastrado."),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _goToAddPlace,
+              onPressed: () => Navigator.pushNamed(context, '/addPlace'),
               child: Text("Adicionar Novo Local"),
             ),
           ],
@@ -100,7 +113,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         itemBuilder: (context, index) {
           final place = places[index];
           return GestureDetector(
-            onTap: () => _goToPlaceDetails(place['id'], place['name']),
+            onTap: () => Navigator.pushNamed(
+              context,
+              '/placeDetails',
+              arguments: {
+                'placeId': place['id'],
+                'placeName': place['name'],
+              },
+            ),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.black87,

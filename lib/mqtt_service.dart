@@ -1,84 +1,111 @@
-import 'package:mqtt_client/mqtt_client.dart';
-import 'package:mqtt_client/mqtt_server_client.dart';
+import 'dart:convert';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_server_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'config.dart';
 
 class MqttService {
   late MqttServerClient client;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = 
-      FlutterLocalNotificationsPlugin();
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
-  Future<void> initializeNotifications() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
-
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  MqttService() {
+    _initializeNotifications();
   }
 
-  Future<void> showNotification(String message) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'solar_alerts',
-      'Solar Alerts',
-      importance: Importance.max,
+  // Inicializar notificações locais
+  void _initializeNotifications() {
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    const initializationSettingsAndroid = AndroidInitializationSettings('app_icon'); // Ícone na pasta android/app/src/main/res/drawable
+    const initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  // Exibir notificação local
+  void _showNotification(String message) async {
+    const androidDetails = AndroidNotificationDetails(
+      'flutter_mqtt_channel', // ID do canal
+      'MQTT', // Nome do canal
+      importance: Importance.high,
       priority: Priority.high,
     );
-
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-
+    const notificationDetails = NotificationDetails(android: androidDetails);
     await flutterLocalNotificationsPlugin.show(
-      0,
-      'Alerta Solar',
-      message,
-      platformChannelSpecifics,
+      0, // ID da notificação
+      'Nova mensagem', // Título
+      message, // Corpo
+      notificationDetails,
     );
   }
 
+  // Conectar ao MQTT
   Future<void> connect() async {
-    // Initialize notifications first
-    await initializeNotifications();
+    final prefs = await SharedPreferences.getInstance();
+    final mqttIp = prefs.getString('mqttIp') ?? '127.0.0.1'; // IP padrão
 
-    // Existing MQTT setup code
-    // ...
-    client = MqttServerClient(MqttConfig.broker, MqttConfig.clientId);
-    client.port = MqttConfig.port;
-    client.keepAlivePeriod = 30;
+    client = MqttServerClient(mqttIp, 'flutter_client');
 
-    final connMessage = MqttConnectMessage()
-        .withClientIdentifier('flutter_client')
-        .startClean()
-        .withWillQos(MqttQos.atMostOnce);
-    client.connectionMessage = connMessage;
+    client.port = 1883;
+    client.keepAlivePeriod = 20;
+    client.logging(on: true);
+
+    client.onConnected = onConnected;
+    client.onDisconnected = onDisconnected;
+    client.onSubscribed = onSubscribed;
+
+    client.updates?.listen((List<MqttReceivedMessage<MqttMessage?>>? messages) {
+      final recMessage = messages?[0].payload as MqttPublishMessage;
+      final payload =
+          MqttPublishPayload.bytesToStringAsString(recMessage.payload.message);
+
+      // Parse o payload como JSON e exibe notificação
+      try {
+        final data = payload.contains("{") ? jsonDecode(payload) : {};
+        final message = data['payload'] ?? 'Mensagem não encontrada';
+        _showNotification(message);
+      } catch (e) {
+        print('Erro ao processar a mensagem: $e');
+      }
+    });
 
     try {
-      print('Conectando ao broker MQTT...');
       await client.connect();
-      print('Conectado!');
-
-      client.subscribe('placa/alertas', MqttQos.atMostOnce);
-
-      client.updates?.listen((List<MqttReceivedMessage<MqttMessage>> messages) {
-        final recMess = messages[0].payload as MqttPublishMessage;
-        final payload =
-            MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-        print('Nova mensagem recebida: $payload');
-
-        // Show notification when message is received
-        showNotification(payload);
-      });
-    } catch (e) {
-      print('Erro na conexão: $e');
+    } on Exception catch (e) {
+      print('Erro ao conectar ao MQTT: $e');
       client.disconnect();
     }
   }
 
-  void disconnect() {
-    client.disconnect();
-    print('Desconectado do broker MQTT');
+  void onConnected() {
+    print('Conectado ao MQTT');
+  }
+
+  void onDisconnected() {
+    print('Desconectado do MQTT');
+  }
+
+  void onSubscribed(String topic) {
+    print('Inscrito no tópico: $topic');
+  }
+
+  Future<void> subscribeToTopic(String topic) async {
+    if (client.connectionStatus?.state == MqttConnectionState.connected) {
+      client.subscribe(topic, MqttQos.atLeastOnce);
+    } else {
+      print('Não conectado ao MQTT.');
+    }
+  }
+
+  void publish(String topic, String message) {
+    if (client.connectionStatus?.state == MqttConnectionState.connected) {
+      final builder = MqttClientPayloadBuilder();
+      builder.addString(message);
+      client.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
+    } else {
+      print('Não conectado ao MQTT.');
+    }
   }
 }
