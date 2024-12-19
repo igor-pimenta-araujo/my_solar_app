@@ -48,7 +48,6 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
-              // Ação ao clicar no ícone de notificação
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text("Notificações em breve!")),
               );
@@ -116,19 +115,35 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 20),
-          _buildSensorCard("Painéis Solares", placeData!['solarPanelSensors']),
+          _buildSensorCard(
+            "Painéis Solares",
+            placeData!['solarPanelSensors'],
+            ['currentPowerGeneration', 'isNetworkWorking', 'isStatusOk'],
+          ),
           SizedBox(height: 10),
-          _buildSensorCard("Temperatura", placeData!['temperatureSensors']),
+          _buildSensorCard(
+            "Temperatura",
+            placeData!['temperatureSensors'],
+            ['temperature', 'isNetworkWorking', 'isStatusOk'],
+          ),
           SizedBox(height: 10),
-          _buildSensorCard("Luminosidade", placeData!['luminositySensors']),
+          _buildSensorCard(
+            "Luminosidade",
+            placeData!['luminositySensors'],
+            ['luminosity', 'isNetworkWorking', 'isStatusOk'],
+          ),
           SizedBox(height: 10),
-          _buildSensorCard("Nível de Sujeira", placeData!['dirtSensors']),
+          _buildSensorCard(
+            "Nível de Sujeira",
+            placeData!['dirtSensors'],
+            ['dirtLevel', 'isNetworkWorking', 'isStatusOk'],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSensorCard(String title, List<dynamic> sensors) {
+  Widget _buildSensorCard(String title, List<dynamic> sensors, List<String> keys) {
     return Container(
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -149,17 +164,26 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
                   "Nenhum sensor cadastrado.",
                   style: TextStyle(color: Colors.white),
                 )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: sensors.length,
-                  itemBuilder: (context, index) {
-                    final sensor = sensors[index];
-                    return Text(
-                      "- Sensor ID: ${sensor['id'] ?? 'N/A'}",
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Sensor ID: ${sensors[0]['id'] ?? 'N/A'}",
                       style: TextStyle(color: Colors.white),
-                    );
-                  },
+                    ),
+                    Text(
+                      "${keys[0]}: ${sensors[0][keys[0]] ?? 'N/A'}",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      "Rede Funcionando: ${sensors[0][keys[1]] ? 'Sim' : 'Não'}",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      "Status OK: ${sensors[0][keys[2]] ? 'Sim' : 'Não'}",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
                 ),
         ],
       ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
 import 'mqtt_service.dart';
+import 'config.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -47,7 +48,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _connectToMqtt() async {
     try {
       await mqttService.connect();
-      mqttService.subscribeToTopic('test/topic'); // Substitua pelo seu tópico
+      mqttService.subscribeToTopic(MqttConfig.topic); // Substitua pelo seu tópico
     } catch (e) {
       print('Erro ao conectar ao MQTT: $e');
     }

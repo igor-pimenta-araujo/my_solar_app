@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       home: LoginScreen(),
       routes: {
         '/dashboard': (context) => DashboardScreen(),
-        '/placa-status': (context) => PlacaStatusScreen(),
+        '/placa-status': (context) => PlaceDetailsScreen(placeId: '', placeName: ''),
         '/create-place': (context) => CreatePlaceScreen(userId: "USER_ID_EXEMPLO"),
         '/user': (context) => UserScreen(userId: "USER_ID_EXEMPLO"),
         '/settings': (context) => SettingsScreen(),

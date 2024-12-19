@@ -45,6 +45,7 @@ class MqttService {
   Future<void> connect() async {
     final prefs = await SharedPreferences.getInstance();
     final mqttIp = prefs.getString('mqttIp') ?? '127.0.0.1'; // IP padrão
+    print('IP do MQTT: $mqttIp');
 
     client = MqttServerClient(mqttIp, 'flutter_client');
 
